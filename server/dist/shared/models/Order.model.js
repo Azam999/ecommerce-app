@@ -18,23 +18,23 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-const express_1 = __importDefault(require("express"));
-const router = express_1.default.Router();
-const UserController = __importStar(require("../controllers/UserController"));
-/**
- * private to admin -- verifyAdmin middleware
- * Get all users
- */
-router.get('/', UserController.GET_ALL_USERS);
-/**
- * private to user -- verifyJWT
- * Get one user
- */
-router.post('/:id', UserController.GET_ONE_USER);
-router.delete('/:id', UserController.DELETE_USER);
-router.patch('/:id', UserController.EDIT_USER);
-exports.default = router;
+const mongoose_1 = __importStar(require("mongoose"));
+const OrderSchema = new mongoose_1.Schema({
+    user: {
+        type: mongoose_1.default.Schema.Types.ObjectId,
+        ref: 'User'
+    },
+    item: {
+        type: mongoose_1.default.Schema.Types.ObjectId,
+        ref: 'Item'
+    },
+    status: {
+        type: String,
+        enum: ['ordered', 'shipped', 'arrived']
+    }
+}, {
+    timestamps: true,
+    versionKey: false
+});
+exports.default = mongoose_1.default.model('Order', OrderSchema);

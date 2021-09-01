@@ -26,18 +26,20 @@ import indexRouter from './routes/index';
 import usersRouter from './routes/users';
 import authRouter from './routes/auth';
 import itemsRouter from './routes/items';
+import ordersRouter from './routes/orders';
 
 router.use('/', indexRouter);
 router.use('/users', usersRouter);
 router.use('/auth', authRouter);
 router.use('/items', itemsRouter);
+router.use('/orders', ordersRouter)
 
 app.use('/api', router)
-// app.use('*', (req: Request, res: Response) => {
-//   res.status(404).json({
-//     message: "404 Not Found",
-//     code: 404
-//   })
-// })
+app.use('*', (req: Request, res: Response) => {
+  res.status(404).json({
+    message: "404 Not Found",
+    code: res.statusCode
+  })
+})
 
 module.exports = app;

@@ -1,13 +1,12 @@
 import { Request, Response } from 'express';
-import Item from '../shared/models/Item.model';
-import { Review } from '../shared/models/Review.model';
-import { IItems, IItem } from '../shared/interfaces/Item';
+import { Item, Review } from '../shared/models/Item.model';
 
 export const GET_ITEMS = async (req: Request, res: Response) => {
   const id = req.params.id;
+
   if (!id) {
     try {
-      const items = await Item.find();
+      const items = await Item.find().populate('reviews');
       res.status(200).send(items);
     } catch (error) {
       res.status(500).json({
@@ -30,17 +29,20 @@ export const GET_ITEMS = async (req: Request, res: Response) => {
 
 export const CREATE_ITEM = (req: Request, res: Response) => {
   const item = new Item(req.body);
-  item.validate().catch((err: any) => {
-    if (!err) {
-      item.save();
-      res.status(200).send('Item created');
-    } else {
-      res.status(400).send(err);
-    }
-  });
+  item
+    .save()
+    .then((item: any) => {
+      res.status(200).json({
+        item,
+        message: 'Item created',
+      });
+    })
+    .catch((err: any) => res.status(400).send(err));
 };
 
-export const SORT_ITEMS = (req: Request, res: Response) => {
+export const SORT_ITEMS = async (req: Request, res: Response) => {
+  const { name, category, price, filter } = req.query;
+
   // Available categories
   const categories = [
     'appliances',
@@ -64,15 +66,36 @@ export const SORT_ITEMS = (req: Request, res: Response) => {
     'alphabetical',
   ];
 
-  // Get category if user wants to look at a specific category
-  // filter includes filterTypes
-  const { category, filter } = req.query;
+  if (filter || name || category || price) {
+    interface ISearchQuery {
+      name?: string;
+      category?: string;
+      price?: number;
+    }
 
-  if (filter) {
+    let searchQuery: ISearchQuery = {};
+    if (name) {
+      searchQuery.name = name as string;
+    }
+
+    if (category) {
+      if (categories.includes(category as string)) {
+        searchQuery.category = category as string;
+      } else {
+        return res.status(400).json({
+          message: "Category doesn't exist"
+        })
+      }
+    }
+
+    if (price) {
+      searchQuery.price = +(price as string);
+    }
+
     if (filterTypes.includes(filter as string)) {
       switch (filter) {
         case 'priceLowToHigh':
-          Item.find()
+          Item.find(searchQuery)
             .sort({ price: 1 })
             .exec((err: any, items: any) => {
               if (err) {
@@ -82,7 +105,7 @@ export const SORT_ITEMS = (req: Request, res: Response) => {
             });
           break;
         case 'priceHighToLow':
-          Item.find()
+          Item.find(searchQuery)
             .sort({ price: -1 })
             .exec((err: any, items: any) => {
               if (err) {
@@ -92,7 +115,7 @@ export const SORT_ITEMS = (req: Request, res: Response) => {
             });
           break;
         case 'newest':
-          Item.find()
+          Item.find(searchQuery)
             .sort({ createdAt: -1 })
             .exec((err: any, items: any) => {
               if (err) {
@@ -102,7 +125,7 @@ export const SORT_ITEMS = (req: Request, res: Response) => {
             });
           break;
         case 'alphabetical':
-          Item.find()
+          Item.find(searchQuery)
             .collation({ locale: 'en' })
             .sort({ name: 1 })
             .exec((err: any, items: any) => {
@@ -113,35 +136,14 @@ export const SORT_ITEMS = (req: Request, res: Response) => {
             });
           break;
         default:
-          res.status(500).json({
-            error: 'Error 500',
+          return res.status(400).json({
+            error: "Filter doesn't exist",
             code: res.statusCode,
           });
       }
     } else {
-      res.status(400).json({
+      return res.status(400).json({
         message: "Filter doesn't exist",
-        code: res.statusCode,
-      });
-    }
-  }
-
-  if (category) {
-    const stringCategory = category as string;
-    if (categories.includes(stringCategory)) {
-      Item.find({ category }).exec((err, items) => {
-        if (!err) {
-          res.status(200).send(items);
-        } else {
-          res.status(500).json({
-            error: 'Error 500',
-            code: res.statusCode,
-          });
-        }
-      });
-    } else {
-      res.status(400).json({
-        message: "Category doesn't exist",
         code: res.statusCode,
       });
     }
@@ -151,7 +153,10 @@ export const SORT_ITEMS = (req: Request, res: Response) => {
 export const DELETE_ITEM = (req: Request, res: Response) => {
   const { id } = req.params;
   Item.findByIdAndDelete(id)
-    .then((item: any) => {
+    .then(async (item: any) => {
+      const deletedReviews = await Review.deleteMany({
+        _id: { $in: item.reviews },
+      });
       res.status(200).json({
         item: {
           name: item.name,
@@ -161,6 +166,7 @@ export const DELETE_ITEM = (req: Request, res: Response) => {
           category: item.category,
         },
         message: 'Item deleted successfully',
+        deletedReviews,
       });
     })
     .catch((err: any) => {
@@ -174,13 +180,13 @@ export const DELETE_ITEM = (req: Request, res: Response) => {
 export const EDIT_ITEM = (req: Request, res: Response) => {
   const { id } = req.params;
   Item.findOneAndUpdate({ _id: id }, req.body)
-    .then((item) => {
+    .then((item: any) => {
       res.status(200).json({
         item,
         values: req.body,
       });
     })
-    .catch((err) => {
+    .catch((err: any) => {
       res.status(400).json({
         error: err,
       });
@@ -189,15 +195,17 @@ export const EDIT_ITEM = (req: Request, res: Response) => {
 
 export const CREATE_REVIEW_FOR_ITEM = (req: Request, res: Response) => {
   const review = new Review(req.body);
+  review.save();
+
   const { itemId } = req.params;
   Item.findOneAndUpdate({ _id: itemId }, { $push: { reviews: review } })
-    .then((item) => {
+    .then((item: any) => {
       res.status(200).json({
         item,
         reviewAdded: review,
       });
     })
-    .catch((err) => {
+    .catch((err: any) => {
       res.status(400).json({
         error: err,
       });
@@ -209,19 +217,25 @@ export const GET_REVIEWS_OR_REVIEW = async (req: Request, res: Response) => {
   const { itemId } = req.params;
   if (reviewId) {
     try {
-      const review = await Item.findById(itemId).select({ reviews: { $elemMatch: { _id: reviewId } } })
+      const review = await Item.findById(itemId)
+        .populate('reviews')
+        .select({
+          reviews: { $elemMatch: { _id: reviewId } },
+        });
       res.status(200).send(review);
     } catch (error) {
       res.status(400).send(error);
     }
   } else {
     try {
-      const allReviews = await Item.findById(itemId).select('reviews');
+      const allReviews = await Item.findById(itemId)
+        .populate('reviews')
+        .select('reviews');
       if (!allReviews) {
         throw {
           error: 'An item with that id does not exist',
-          code: 404
-        }
+          code: 404,
+        };
       }
       res.status(200).send(allReviews);
     } catch (error) {
@@ -230,20 +244,22 @@ export const GET_REVIEWS_OR_REVIEW = async (req: Request, res: Response) => {
   }
 };
 
-export const DELETE_REVIEW = (req: Request, res: Response) => {
-  const { reviewId } = req.query;
-  const { itemId } = req.params;
+export const DELETE_ITEM_REVIEW = (req: Request, res: Response) => {
+  const { itemId, reviewId } = req.params;
+
   Item.findOneAndUpdate(
     { _id: itemId },
     { $pull: { reviews: { _id: reviewId } } }
   )
-    .then((item) => {
+    .then(async (item: any) => {
+      const deletedReview = await Review.deleteOne({ _id: reviewId });
       res.status(200).json({
         item,
         reviewIdDeleted: reviewId,
+        deletedReview,
       });
     })
-    .catch((err) => {
+    .catch((err: any) => {
       res.status(400).json({
         error: err,
       });

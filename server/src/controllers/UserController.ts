@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { User } from '../shared/models/User.model';
+import bcrypt from 'bcryptjs';
 
 export const GET_ALL_USERS = (req: Request, res: Response) => {
   User.find().exec((err, users) => {
@@ -37,7 +38,7 @@ export const DELETE_USER = (req: Request, res: Response) => {
         user: {
           _id: user!._id,
           name: user!.name,
-          email: user!.email
+          email: user!.email,
         },
         message: 'User deleted successfully',
       });
@@ -50,6 +51,57 @@ export const DELETE_USER = (req: Request, res: Response) => {
     });
 };
 
-export const EDIT_USER = (req: Request, res: Response) => {
-  res.status(200).send("Edit")
-}
+export const EDIT_USER = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { password, name } = req.body;
+  const { change } = req.query;
+
+  switch (change) {
+    case 'password':
+      try {
+        let hash = await bcrypt.hash(password, 10);
+
+        if (password.length < 8)
+          throw {
+            error: 'Password must be at least 8 characters long',
+          };
+
+        User.findOneAndUpdate({ _id: id }, { ...req.body, password: hash })
+          .then((user) => {
+            res.status(200).json({
+              user,
+              values: {
+                ...req.body,
+                password: hash,
+              },
+            });
+          })
+          .catch((err) => {
+            res.status(400).json({
+              error: err,
+            });
+          });
+      } catch (error) {
+        res.send(error);
+      }
+      break;
+    case 'name':
+      User.findOneAndUpdate({ _id: id }, { ...req.body, name })
+        .then((user) => {
+          res.status(200).json({
+            user,
+            values: { ...req.body, name },
+          });
+        })
+        .catch((err) => {
+          res.status(400).json({
+            error: err,
+          });
+        });
+      break;
+    default:
+      res.status(400).json({
+        message: 'You can only change the name or password',
+      });
+  }
+};

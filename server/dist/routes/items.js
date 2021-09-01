@@ -41,5 +41,5 @@ router.patch('/:itemId/reviews', ItemController.CREATE_REVIEW_FOR_ITEM);
 // if query provided, then get one review, otherwise get all reviews
 router.get('/:itemId/reviews', ItemController.GET_REVIEWS_OR_REVIEW);
 // Delete review
-router.delete('/:itemId/reviews', ItemController.DELETE_REVIEW);
+router.delete('/:itemId/reviews/:reviewId', ItemController.DELETE_ITEM_REVIEW);
 exports.default = router;

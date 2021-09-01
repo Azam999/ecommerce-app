@@ -3,18 +3,19 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "tsc && node ./bin/www",
-    "dev": "nodemon ./bin/www && tsc --watch",
-    "build": "tsc"
+    "dev": "nodemon ./bin/www",
+    "build": "tsc -w",
+    "start": "concurrently \"npm run dev\" \"npm run build\""
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
+    "concurrently": "^6.2.1",
     "cors": "^2.8.5",
     "debug": "~2.6.9",
     "dotenv": "^10.0.0",
     "express": "~4.16.1",
     "jsonwebtoken": "^8.5.1",
-    "mongoose": "^6.0.2",
+    "mongoose": "6.0.2",
     "morgan": "~1.9.1",
     "validator": "^13.6.0"
   },

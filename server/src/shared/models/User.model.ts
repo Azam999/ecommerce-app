@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import mongoose, { Schema } from 'mongoose';
 import validator from 'validator';
 
 interface IUser {
@@ -6,7 +6,6 @@ interface IUser {
   name: string,
   email: string,
   password: string,
-  birthDate?: String
 }
 
 const UserSchema = new Schema<IUser>({
@@ -22,9 +21,9 @@ const UserSchema = new Schema<IUser>({
   },
   password: {
     type: String,
-    required: true
+    required: true,
+    min: 8
   },
-  birthDate: String,
 }, {
   versionKey: false,
   timestamps: true

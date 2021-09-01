@@ -38,9 +38,9 @@ const UserSchema = new mongoose_1.Schema({
     },
     password: {
         type: String,
-        required: true
+        required: true,
+        min: 8
     },
-    birthDate: String,
 }, {
     versionKey: false,
     timestamps: true

@@ -27,4 +27,5 @@ const router = express_1.default.Router();
 const AuthController = __importStar(require("../controllers/AuthController"));
 router.post('/register', AuthController.REGISTER);
 router.post('/login', AuthController.LOGIN);
+router.post('/generateToken', AuthController.GENERATE_TOKEN);
 exports.default = router;

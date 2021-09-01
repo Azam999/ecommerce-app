@@ -14,10 +14,8 @@ router.get('/', UserController.GET_ALL_USERS);
  */
 router.post('/:id', UserController.GET_ONE_USER);
 
-router.delete('/:id', UserController.DELETE_USER)
+router.delete('/:id', UserController.DELETE_USER);
 
-
-// TODO: Implement
-router.patch('/:id', UserController.EDIT_USER)
+router.patch('/:id', UserController.EDIT_USER);
 
 export default router;

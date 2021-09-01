@@ -8,18 +8,14 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.DELETE_REVIEW = exports.GET_REVIEWS_OR_REVIEW = exports.CREATE_REVIEW_FOR_ITEM = exports.EDIT_ITEM = exports.DELETE_ITEM = exports.SORT_ITEMS = exports.CREATE_ITEM = exports.GET_ITEMS = void 0;
-const Item_model_1 = __importDefault(require("../shared/models/Item.model"));
-const Review_model_1 = require("../shared/models/Review.model");
+exports.DELETE_ITEM_REVIEW = exports.GET_REVIEWS_OR_REVIEW = exports.CREATE_REVIEW_FOR_ITEM = exports.EDIT_ITEM = exports.DELETE_ITEM = exports.SORT_ITEMS = exports.CREATE_ITEM = exports.GET_ITEMS = void 0;
+const Item_model_1 = require("../shared/models/Item.model");
 const GET_ITEMS = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const id = req.params.id;
     if (!id) {
         try {
-            const items = yield Item_model_1.default.find();
+            const items = yield Item_model_1.Item.find().populate('reviews');
             res.status(200).send(items);
         }
         catch (error) {
@@ -31,7 +27,7 @@ const GET_ITEMS = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
     else {
         try {
-            const item = yield Item_model_1.default.findById(id);
+            const item = yield Item_model_1.Item.findById(id);
             res.status(200).send(item);
         }
         catch (error) {
@@ -44,19 +40,20 @@ const GET_ITEMS = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
 });
 exports.GET_ITEMS = GET_ITEMS;
 const CREATE_ITEM = (req, res) => {
-    const item = new Item_model_1.default(req.body);
-    item.validate().catch((err) => {
-        if (!err) {
-            item.save();
-            res.status(200).send('Item created');
-        }
-        else {
-            res.status(400).send(err);
-        }
-    });
+    const item = new Item_model_1.Item(req.body);
+    item
+        .save()
+        .then((item) => {
+        res.status(200).json({
+            item,
+            message: 'Item created',
+        });
+    })
+        .catch((err) => res.status(400).send(err));
 };
 exports.CREATE_ITEM = CREATE_ITEM;
-const SORT_ITEMS = (req, res) => {
+const SORT_ITEMS = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { name, category, price, filter } = req.query;
     // Available categories
     const categories = [
         'appliances',
@@ -78,14 +75,28 @@ const SORT_ITEMS = (req, res) => {
         'newest',
         'alphabetical',
     ];
-    // Get category if user wants to look at a specific category
-    // filter includes filterTypes
-    const { category, filter } = req.query;
-    if (filter) {
+    if (filter || name || category || price) {
+        let searchQuery = {};
+        if (name) {
+            searchQuery.name = name;
+        }
+        if (category) {
+            if (categories.includes(category)) {
+                searchQuery.category = category;
+            }
+            else {
+                return res.status(400).json({
+                    message: "Category doesn't exist"
+                });
+            }
+        }
+        if (price) {
+            searchQuery.price = +price;
+        }
         if (filterTypes.includes(filter)) {
             switch (filter) {
                 case 'priceLowToHigh':
-                    Item_model_1.default.find()
+                    Item_model_1.Item.find(searchQuery)
                         .sort({ price: 1 })
                         .exec((err, items) => {
                         if (err) {
@@ -95,7 +106,7 @@ const SORT_ITEMS = (req, res) => {
                     });
                     break;
                 case 'priceHighToLow':
-                    Item_model_1.default.find()
+                    Item_model_1.Item.find(searchQuery)
                         .sort({ price: -1 })
                         .exec((err, items) => {
                         if (err) {
@@ -105,7 +116,7 @@ const SORT_ITEMS = (req, res) => {
                     });
                     break;
                 case 'newest':
-                    Item_model_1.default.find()
+                    Item_model_1.Item.find(searchQuery)
                         .sort({ createdAt: -1 })
                         .exec((err, items) => {
                         if (err) {
@@ -115,7 +126,7 @@ const SORT_ITEMS = (req, res) => {
                     });
                     break;
                 case 'alphabetical':
-                    Item_model_1.default.find()
+                    Item_model_1.Item.find(searchQuery)
                         .collation({ locale: 'en' })
                         .sort({ name: 1 })
                         .exec((err, items) => {
@@ -126,47 +137,28 @@ const SORT_ITEMS = (req, res) => {
                     });
                     break;
                 default:
-                    res.status(500).json({
-                        error: 'Error 500',
+                    return res.status(400).json({
+                        error: "Filter doesn't exist",
                         code: res.statusCode,
                     });
             }
         }
         else {
-            res.status(400).json({
+            return res.status(400).json({
                 message: "Filter doesn't exist",
                 code: res.statusCode,
             });
         }
     }
-    if (category) {
-        const stringCategory = category;
-        if (categories.includes(stringCategory)) {
-            Item_model_1.default.find({ category }).exec((err, items) => {
-                if (!err) {
-                    res.status(200).send(items);
-                }
-                else {
-                    res.status(500).json({
-                        error: 'Error 500',
-                        code: res.statusCode,
-                    });
-                }
-            });
-        }
-        else {
-            res.status(400).json({
-                message: "Category doesn't exist",
-                code: res.statusCode,
-            });
-        }
-    }
-};
+});
 exports.SORT_ITEMS = SORT_ITEMS;
 const DELETE_ITEM = (req, res) => {
     const { id } = req.params;
-    Item_model_1.default.findByIdAndDelete(id)
-        .then((item) => {
+    Item_model_1.Item.findByIdAndDelete(id)
+        .then((item) => __awaiter(void 0, void 0, void 0, function* () {
+        const deletedReviews = yield Item_model_1.Review.deleteMany({
+            _id: { $in: item.reviews },
+        });
         res.status(200).json({
             item: {
                 name: item.name,
@@ -176,8 +168,9 @@ const DELETE_ITEM = (req, res) => {
                 category: item.category,
             },
             message: 'Item deleted successfully',
+            deletedReviews,
         });
-    })
+    }))
         .catch((err) => {
         res.status(400).json({
             message: 'An item with that id does not exist',
@@ -188,7 +181,7 @@ const DELETE_ITEM = (req, res) => {
 exports.DELETE_ITEM = DELETE_ITEM;
 const EDIT_ITEM = (req, res) => {
     const { id } = req.params;
-    Item_model_1.default.findOneAndUpdate({ _id: id }, req.body)
+    Item_model_1.Item.findOneAndUpdate({ _id: id }, req.body)
         .then((item) => {
         res.status(200).json({
             item,
@@ -203,9 +196,10 @@ const EDIT_ITEM = (req, res) => {
 };
 exports.EDIT_ITEM = EDIT_ITEM;
 const CREATE_REVIEW_FOR_ITEM = (req, res) => {
-    const review = new Review_model_1.Review(req.body);
+    const review = new Item_model_1.Review(req.body);
+    review.save();
     const { itemId } = req.params;
-    Item_model_1.default.findOneAndUpdate({ _id: itemId }, { $push: { reviews: review } })
+    Item_model_1.Item.findOneAndUpdate({ _id: itemId }, { $push: { reviews: review } })
         .then((item) => {
         res.status(200).json({
             item,
@@ -224,7 +218,11 @@ const GET_REVIEWS_OR_REVIEW = (req, res) => __awaiter(void 0, void 0, void 0, fu
     const { itemId } = req.params;
     if (reviewId) {
         try {
-            const review = yield Item_model_1.default.findById(itemId).select({ reviews: { $elemMatch: { _id: reviewId } } });
+            const review = yield Item_model_1.Item.findById(itemId)
+                .populate('reviews')
+                .select({
+                reviews: { $elemMatch: { _id: reviewId } },
+            });
             res.status(200).send(review);
         }
         catch (error) {
@@ -233,11 +231,13 @@ const GET_REVIEWS_OR_REVIEW = (req, res) => __awaiter(void 0, void 0, void 0, fu
     }
     else {
         try {
-            const allReviews = yield Item_model_1.default.findById(itemId).select('reviews');
+            const allReviews = yield Item_model_1.Item.findById(itemId)
+                .populate('reviews')
+                .select('reviews');
             if (!allReviews) {
                 throw {
                     error: 'An item with that id does not exist',
-                    code: 404
+                    code: 404,
                 };
             }
             res.status(200).send(allReviews);
@@ -248,20 +248,21 @@ const GET_REVIEWS_OR_REVIEW = (req, res) => __awaiter(void 0, void 0, void 0, fu
     }
 });
 exports.GET_REVIEWS_OR_REVIEW = GET_REVIEWS_OR_REVIEW;
-const DELETE_REVIEW = (req, res) => {
-    const { reviewId } = req.query;
-    const { itemId } = req.params;
-    Item_model_1.default.findOneAndUpdate({ _id: itemId }, { $pull: { reviews: { _id: reviewId } } })
-        .then((item) => {
+const DELETE_ITEM_REVIEW = (req, res) => {
+    const { itemId, reviewId } = req.params;
+    Item_model_1.Item.findOneAndUpdate({ _id: itemId }, { $pull: { reviews: { _id: reviewId } } })
+        .then((item) => __awaiter(void 0, void 0, void 0, function* () {
+        const deletedReview = yield Item_model_1.Review.deleteOne({ _id: reviewId });
         res.status(200).json({
             item,
             reviewIdDeleted: reviewId,
+            deletedReview,
         });
-    })
+    }))
         .catch((err) => {
         res.status(400).json({
             error: err,
         });
     });
 };
-exports.DELETE_REVIEW = DELETE_REVIEW;
+exports.DELETE_ITEM_REVIEW = DELETE_ITEM_REVIEW;

@@ -23,15 +23,18 @@ const mongoose_1 = __importStar(require("mongoose"));
 const OrderSchema = new mongoose_1.Schema({
     user: {
         type: mongoose_1.default.Schema.Types.ObjectId,
-        ref: 'User'
+        ref: 'User',
+        required: true
     },
     item: {
         type: mongoose_1.default.Schema.Types.ObjectId,
-        ref: 'Item'
+        ref: 'Item',
+        required: true
     },
     status: {
         type: String,
-        enum: ['ordered', 'shipped', 'arrived']
+        enum: ['ordered', 'shipped', 'arrived'],
+        default: 'ordered'
     }
 }, {
     timestamps: true,

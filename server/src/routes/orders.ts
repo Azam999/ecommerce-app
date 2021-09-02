@@ -1,14 +1,15 @@
-import express, { Request, Response } from 'express';
+import express from 'express';
 const router = express.Router();
-import Order from '../shared/models/Order.model';
+import * as OrderController from '../controllers/OrderController';
 
-router.get("/", async (req: Request, res: Response) => {
-  try {
-    const orders = await Order.find();
-  res.status(200).send(orders)
-  } catch (error) {
-    res.status(500).send(error);
-  }
-})
+
+// Get specific order for user by using verifyToken middleware and then getting that data by using req.userData
+router.get('/:id?', OrderController.GET_ORDERS);
+
+router.post('/', OrderController.CREATE_ORDER);
+
+router.patch('/:id', OrderController.CHANGE_ORDER_STATUS);
+
+router.delete('/:id', OrderController.DELETE_ORDER)
 
 export default router;

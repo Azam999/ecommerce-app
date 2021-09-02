@@ -3,15 +3,18 @@ import mongoose, { Schema } from 'mongoose';
 const OrderSchema = new Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
+    ref: 'User',
+    required: true
   },
   item: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Item'
+    ref: 'Item',
+    required: true
   },
   status: {
     type: String,
-    enum: ['ordered', 'shipped', 'arrived']
+    enum: ['ordered', 'shipped', 'arrived'],
+    default: 'ordered'
   }
 }, {
   timestamps: true,

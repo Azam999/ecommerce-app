@@ -34,6 +34,16 @@ const ItemSchema = new mongoose_1.Schema({
         min: [0.01, 'Minimum price is 0.01'],
         max: [99999, 'Maximum price is 99999'],
     },
+    description: {
+        type: String,
+        required: true,
+        minLength: 10,
+        maxLength: 2000
+    },
+    image: {
+        type: String,
+        required: true
+    },
     quantity: {
         type: Number,
         required: true,
@@ -76,7 +86,10 @@ const ItemSchema = new mongoose_1.Schema({
     timestamps: true,
 });
 const ReviewSchema = new mongoose_1.Schema({
-    // Add user ref
+    // user: {
+    //   type: mongoose.Schema.Types.ObjectId,
+    //   ref: 'User'
+    // },
     stars: {
         type: Number,
         required: true,

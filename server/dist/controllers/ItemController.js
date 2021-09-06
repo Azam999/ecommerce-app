@@ -8,9 +8,13 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.DELETE_ITEM_REVIEW = exports.GET_REVIEWS_OR_REVIEW = exports.CREATE_REVIEW_FOR_ITEM = exports.EDIT_ITEM = exports.DELETE_ITEM = exports.SORT_ITEMS = exports.CREATE_ITEM = exports.GET_ITEMS = void 0;
-const Item_model_1 = require("../shared/models/Item.model");
+exports.UPLOAD_ITEM_IMAGE = exports.DELETE_ITEM_REVIEW = exports.GET_REVIEWS_OR_REVIEW = exports.CREATE_REVIEW_FOR_ITEM = exports.EDIT_ITEM = exports.DELETE_ITEM = exports.SEARCH_ITEMS = exports.SORT_ITEMS = exports.CREATE_ITEM = exports.GET_ITEMS = void 0;
+const Item_model_1 = require("../models/Item.model");
+const cloudinary_1 = __importDefault(require("../utils/cloudinary"));
 const GET_ITEMS = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const id = req.params.id;
     if (!id) {
@@ -39,18 +43,28 @@ const GET_ITEMS = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 exports.GET_ITEMS = GET_ITEMS;
-const CREATE_ITEM = (req, res) => {
-    const item = new Item_model_1.Item(req.body);
+const CREATE_ITEM = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    let upload;
+    try {
+        upload = yield cloudinary_1.default.uploader.upload(req.body.image, {
+            upload_preset: 'z2svouib'
+        });
+    }
+    catch (error) {
+        return res.status(400).send(error);
+    }
+    const item = new Item_model_1.Item(Object.assign(Object.assign({}, req.body), { image: upload.url }));
     item
         .save()
-        .then((item) => {
+        .then((item) => __awaiter(void 0, void 0, void 0, function* () {
+        // Upload
         res.status(200).json({
             item,
             message: 'Item created',
         });
-    })
+    }))
         .catch((err) => res.status(400).send(err));
-};
+});
 exports.CREATE_ITEM = CREATE_ITEM;
 const SORT_ITEMS = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { name, category, price, filter } = req.query;
@@ -60,7 +74,7 @@ const SORT_ITEMS = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
         'sports',
         'clothes',
         'games',
-        'homeAndKitchen',
+        'home and kitchen',
         'electronics',
         'food',
         'computers',
@@ -86,7 +100,7 @@ const SORT_ITEMS = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             }
             else {
                 return res.status(400).json({
-                    message: "Category doesn't exist"
+                    message: "Category doesn't exist",
                 });
             }
         }
@@ -152,6 +166,32 @@ const SORT_ITEMS = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
     }
 });
 exports.SORT_ITEMS = SORT_ITEMS;
+const SEARCH_ITEMS = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    // Searching for "{query}"
+    // If 0 items return "No items" when rendering in react .map()
+    const { q } = req.query;
+    const name = q.toLowerCase();
+    if (!name) {
+        return res.status(400).send({
+            message: "Empty request",
+            code: res.statusCode
+        });
+    }
+    const items = yield Item_model_1.Item.aggregate([
+        {
+            $search: {
+                index: 'default',
+                text: {
+                    query: name,
+                    path: 'name',
+                    fuzzy: {},
+                },
+            },
+        },
+    ]);
+    res.status(200).send(items);
+});
+exports.SEARCH_ITEMS = SEARCH_ITEMS;
 const DELETE_ITEM = (req, res) => {
     const { id } = req.params;
     Item_model_1.Item.findByIdAndDelete(id)
@@ -266,3 +306,15 @@ const DELETE_ITEM_REVIEW = (req, res) => {
     });
 };
 exports.DELETE_ITEM_REVIEW = DELETE_ITEM_REVIEW;
+const UPLOAD_ITEM_IMAGE = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const upload = yield cloudinary_1.default.uploader.upload(req.body.image, {
+            upload_preset: 'z2svouib'
+        });
+        res.status(200).send(upload);
+    }
+    catch (error) {
+        res.status(400).send(error);
+    }
+});
+exports.UPLOAD_ITEM_IMAGE = UPLOAD_ITEM_IMAGE;

@@ -19,26 +19,30 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.Review = exports.Item = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
-const User_model_1 = require("./User.model");
-const ReviewSchema = new mongoose_1.Schema({
-    user: User_model_1.UserSchema,
-    stars: Number,
-    title: String,
-    body: String,
-    votes: Number,
-}, {
-    versionKey: false,
-    timestamps: true
-});
 const ItemSchema = new mongoose_1.Schema({
     name: {
         type: String,
         required: true,
+        minLength: 1,
+        maxLength: 50,
     },
     price: {
         type: Number,
         required: true,
+        min: [0.01, 'Minimum price is 0.01'],
+        max: [99999, 'Maximum price is 99999'],
+    },
+    description: {
+        type: String,
+        required: true,
+        minLength: 10,
+        maxLength: 2000
+    },
+    image: {
+        type: String,
+        required: true
     },
     quantity: {
         type: Number,
@@ -47,16 +51,90 @@ const ItemSchema = new mongoose_1.Schema({
     seller: {
         type: String,
         required: true,
+        minLength: 1,
+        maxLength: 50,
     },
     category: {
         type: String,
         required: true,
+        minLength: 1,
+        maxLength: 50,
+        lowercase: true,
+        enum: [
+            'appliances',
+            'sports',
+            'clothes',
+            'games',
+            'home and kitchen',
+            'electronics',
+            'food',
+            'computers',
+            'art',
+            'office',
+            'exercise',
+        ],
     },
-    reviews: {
-        type: [ReviewSchema],
-    },
+    reviews: [
+        {
+            type: mongoose_1.Schema.Types.ObjectId,
+            ref: 'Review',
+            required: true
+        },
+    ],
 }, {
     versionKey: false,
-    timestamps: true
+    timestamps: true,
 });
-exports.default = mongoose_1.default.model('Item', ItemSchema);
+const ReviewSchema = new mongoose_1.Schema({
+    // user: {
+    //   type: mongoose.Schema.Types.ObjectId,
+    //   ref: 'User'
+    // },
+    stars: {
+        type: Number,
+        required: true,
+        min: 1,
+        max: 5,
+    },
+    title: {
+        type: String,
+        required: true,
+        minLength: [1, 'Title is required'],
+        maxLength: [150, 'Title can only be 150 characters'],
+        trim: true,
+    },
+    body: {
+        type: String,
+        required: true,
+        minLength: [10, 'Body must be at least 10 character'],
+        maxLength: [5000, '5000 characters is the limit'],
+    },
+    votes: Number,
+}, {
+    versionKey: false,
+    timestamps: true,
+});
+// interface IReview {
+//   _id?: mongoose.Types.ObjectId,
+//   user: IUser,
+//   stars: number,
+//   title: string,
+//   body: string
+//   votes?: number
+// }
+// interface IReviews extends Array<IReview> { }
+// interface IItem {
+//   _id?: mongoose.Types.ObjectId,
+//   name: string,
+//   price: number,
+//   quantity: number,
+//   seller: string,
+//   category: string,
+//   reviews?: IReviews
+// }
+const Review = mongoose_1.default.model('Review', ReviewSchema, 'reviews');
+exports.Review = Review;
+const Item = mongoose_1.default.model('Item', ItemSchema, 'items');
+exports.Item = Item;
+ItemSchema.pre('remove', function (next) {
+});

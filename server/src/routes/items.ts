@@ -8,6 +8,9 @@ router.post('/', ItemController.CREATE_ITEM);
 // Sort items
 router.get('/sort', ItemController.SORT_ITEMS);
 
+// Search items
+router.get('/search', ItemController.SEARCH_ITEMS);
+
 // Get all items
 router.get('/:id?', ItemController.GET_ITEMS);
 
@@ -18,7 +21,6 @@ router.delete('/:id', ItemController.DELETE_ITEM);
 router.patch('/:id', ItemController.EDIT_ITEM);
 
 // Reviews
-
 // Create new review
 router.patch('/:itemId/reviews', ItemController.CREATE_REVIEW_FOR_ITEM);
 
@@ -27,5 +29,8 @@ router.get('/:itemId/reviews', ItemController.GET_REVIEWS_OR_REVIEW);
 
 // Delete review
 router.delete('/:itemId/reviews/:reviewId', ItemController.DELETE_ITEM_REVIEW);
+
+// Upload
+router.post('/image', ItemController.UPLOAD_ITEM_IMAGE)
 
 export default router;

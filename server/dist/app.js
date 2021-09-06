@@ -12,12 +12,12 @@ const mongoose = require('mongoose');
 const router = express_1.default.Router();
 // Initial setup
 dotenv_1.default.config();
-const app = express_1.default();
+const app = (0, express_1.default)();
 // Middleware
-app.use(morgan_1.default('dev'));
+app.use((0, morgan_1.default)('dev'));
 app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: false }));
-app.use(cors_1.default());
+app.use((0, cors_1.default)());
 // Connect to MongoDB via Mongoose
 mongoose.connect(process.env.MONGO_URI);
 // Routes

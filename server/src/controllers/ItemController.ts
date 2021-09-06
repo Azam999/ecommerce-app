@@ -1,5 +1,7 @@
 import { Request, Response } from 'express';
-import { Item, Review } from '../shared/models/Item.model';
+import { Item, Review } from '../models/Item.model';
+import cloudinary from '../utils/cloudinary';
+import { UploadApiResponse } from 'cloudinary';
 
 export const GET_ITEMS = async (req: Request, res: Response) => {
   const id = req.params.id;
@@ -27,11 +29,21 @@ export const GET_ITEMS = async (req: Request, res: Response) => {
   }
 };
 
-export const CREATE_ITEM = (req: Request, res: Response) => {
-  const item = new Item(req.body);
+export const CREATE_ITEM = async (req: Request, res: Response) => {
+  let upload;
+  try {
+    upload = await cloudinary.uploader.upload(req.body.image, {
+      upload_preset: 'z2svouib'
+    })
+  } catch (error) {
+    return res.status(400).send(error)
+  }
+
+  const item = new Item({ ...req.body, image: (upload as UploadApiResponse).url });
   item
     .save()
-    .then((item: any) => {
+    .then(async (item: any) => {
+      // Upload
       res.status(200).json({
         item,
         message: 'Item created',
@@ -49,7 +61,7 @@ export const SORT_ITEMS = async (req: Request, res: Response) => {
     'sports',
     'clothes',
     'games',
-    'homeAndKitchen',
+    'home and kitchen',
     'electronics',
     'food',
     'computers',
@@ -83,8 +95,8 @@ export const SORT_ITEMS = async (req: Request, res: Response) => {
         searchQuery.category = category as string;
       } else {
         return res.status(400).json({
-          message: "Category doesn't exist"
-        })
+          message: "Category doesn't exist",
+        });
       }
     }
 
@@ -148,6 +160,35 @@ export const SORT_ITEMS = async (req: Request, res: Response) => {
       });
     }
   }
+};
+
+export const SEARCH_ITEMS = async (req: Request, res: Response) => {
+  // Searching for "{query}"
+  // If 0 items return "No items" when rendering in react .map()
+  const { q } = req.query;
+  const name = (q as string).toLowerCase();
+
+  if (!name) {
+    return res.status(400).send({
+      message: "Empty request",
+      code: res.statusCode
+    })
+  }
+
+  const items = await Item.aggregate([
+    {
+      $search: {
+        index: 'default',
+        text: {
+          query: name,
+          path: 'name',
+          fuzzy: {},
+        },
+      },
+    },
+  ]);
+
+  res.status(200).send(items);
 };
 
 export const DELETE_ITEM = (req: Request, res: Response) => {
@@ -265,3 +306,14 @@ export const DELETE_ITEM_REVIEW = (req: Request, res: Response) => {
       });
     });
 };
+
+export const UPLOAD_ITEM_IMAGE = async (req: Request, res: Response) => {
+  try {
+    const upload = await cloudinary.uploader.upload(req.body.image, {
+      upload_preset: 'z2svouib'
+    })
+    res.status(200).send(upload);
+  } catch (error) {
+    res.status(400).send(error)
+  }
+}

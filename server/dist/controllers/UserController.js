@@ -13,7 +13,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.EDIT_USER = exports.DELETE_USER = exports.GET_ONE_USER = exports.GET_ALL_USERS = void 0;
-const User_model_1 = require("../shared/models/User.model");
+const User_model_1 = require("../models/User.model");
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const GET_ALL_USERS = (req, res) => {
     User_model_1.User.find().exec((err, users) => {

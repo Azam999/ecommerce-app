@@ -13,7 +13,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DELETE_ORDER = exports.CHANGE_ORDER_STATUS = exports.CREATE_ORDER = exports.GET_ORDERS = void 0;
-const Order_model_1 = __importDefault(require("../shared/models/Order.model"));
+const Order_model_1 = __importDefault(require("../models/Order.model"));
 const GET_ORDERS = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;
     if (!id) {

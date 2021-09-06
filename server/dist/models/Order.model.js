@@ -18,34 +18,26 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.UserSchema = exports.User = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
-const validator_1 = __importDefault(require("validator"));
-const UserSchema = new mongoose_1.Schema({
-    name: {
-        type: String,
+const OrderSchema = new mongoose_1.Schema({
+    user: {
+        type: mongoose_1.default.Schema.Types.ObjectId,
+        ref: 'User',
         required: true
     },
-    email: {
-        type: String,
-        required: [true, 'Email address is required'],
-        trim: true,
-        unique: true,
-        validate: [validator_1.default.isEmail, 'Email is not valid']
+    item: {
+        type: mongoose_1.default.Schema.Types.ObjectId,
+        ref: 'Item',
+        required: true
     },
-    password: {
+    status: {
         type: String,
-        required: true,
-        min: 8
-    },
+        enum: ['ordered', 'shipped', 'arrived'],
+        default: 'ordered'
+    }
 }, {
-    versionKey: false,
-    timestamps: true
+    timestamps: true,
+    versionKey: false
 });
-exports.UserSchema = UserSchema;
-const User = mongoose_1.default.model('User', UserSchema);
-exports.User = User;
+exports.default = mongoose_1.default.model('Order', OrderSchema);

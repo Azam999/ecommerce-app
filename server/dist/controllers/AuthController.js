@@ -13,7 +13,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.GENERATE_TOKEN = exports.LOGIN = exports.REGISTER = void 0;
-const User_model_1 = require("../shared/models/User.model");
+const User_model_1 = require("../models/User.model");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 function createTokens(jwtPayload, both) {

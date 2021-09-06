@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import Order from '../shared/models/Order.model';
+import Order from '../models/Order.model';
 
 export const GET_ORDERS = async (req: Request, res: Response) => {
   const { id } = req.params;

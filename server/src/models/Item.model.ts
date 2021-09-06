@@ -14,6 +14,16 @@ const ItemSchema = new Schema(
       min: [0.01, 'Minimum price is 0.01'],
       max: [99999, 'Maximum price is 99999'],
     },
+    description: {
+      type: String,
+      required: true,
+      minLength: 10,
+      maxLength: 2000
+    },
+    image: {
+      type: String,
+      required: true
+    },
     quantity: {
       type: Number,
       required: true,
@@ -35,7 +45,7 @@ const ItemSchema = new Schema(
         'sports',
         'clothes',
         'games',
-        'homeAndKitchen',
+        'home and kitchen',
         'electronics',
         'food',
         'computers',
@@ -60,7 +70,10 @@ const ItemSchema = new Schema(
 
 const ReviewSchema = new Schema(
   {
-    // Add user ref
+    // user: {
+    //   type: mongoose.Schema.Types.ObjectId,
+    //   ref: 'User'
+    // },
     stars: {
       type: Number,
       required: true,

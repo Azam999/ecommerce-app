@@ -1,1 +1,3 @@
 # ecommerce-app
+
+NOT FINISHED
